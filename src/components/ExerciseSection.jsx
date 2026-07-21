@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const TYPES = ['散步', '跑步', '玩球', '游泳', '其他']
@@ -13,19 +13,28 @@ const LOCATIONS = [
   { key: 'indoor',   label: '室內' },
 ]
 
+const EMPTY_FORM = { type: '散步', duration_min: '', location: '', paw_wiped: false, notes: '' }
+
 export default function ExerciseSection({ logId, entries, onRefresh }) {
   const [open, setOpen] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({
-    type: '散步',
-    duration_min: '',
-    location: '',
-    paw_wiped: false,
-    notes: '',
-  })
+  const [editId, setEditId] = useState(null)
+  const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
 
-  async function handleAdd(e) {
+  function openAdd() {
+    setEditId(null)
+    setForm(EMPTY_FORM)
+    setShowForm(true)
+  }
+
+  function openEdit(entry) {
+    setEditId(entry.id)
+    setForm({ type: entry.type, duration_min: entry.duration_min || '', location: '', paw_wiped: false, notes: entry.notes || '' })
+    setShowForm(true)
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!logId) return
     setSaving(true)
@@ -35,14 +44,19 @@ export default function ExerciseSection({ logId, entries, onRefresh }) {
       form.notes,
     ].filter(Boolean).join('，')
 
-    await supabase.from('exercise_entries').insert([{
-      log_id: logId,
+    const payload = {
       type: form.type,
       duration_min: form.duration_min ? Number(form.duration_min) : null,
       notes: notes || null,
-    }])
-    setForm({ type: '散步', duration_min: '', location: '', paw_wiped: false, notes: '' })
+    }
+    if (editId) {
+      await supabase.from('exercise_entries').update(payload).eq('id', editId)
+    } else {
+      await supabase.from('exercise_entries').insert([{ log_id: logId, ...payload }])
+    }
+    setForm(EMPTY_FORM)
     setShowForm(false)
+    setEditId(null)
     setSaving(false)
     onRefresh()
   }
@@ -82,14 +96,20 @@ export default function ExerciseSection({ logId, entries, onRefresh }) {
                 )}
                 {e.notes && <p className="text-xs text-stone-400 mt-0.5">{e.notes}</p>}
               </div>
-              <button onClick={() => handleDelete(e.id)} className="text-stone-300 hover:text-red-400 transition-colors flex-shrink-0">
-                <Trash2 size={14} />
-              </button>
+              <div className="flex gap-2 flex-shrink-0">
+                <button onClick={() => openEdit(e)} className="text-stone-300 hover:text-dojo-blue transition-colors">
+                  <Pencil size={14} />
+                </button>
+                <button onClick={() => handleDelete(e.id)} className="text-stone-300 hover:text-red-400 transition-colors">
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
 
           {showForm ? (
-            <form onSubmit={handleAdd} className="space-y-2.5 pt-1">
+            <form onSubmit={handleSubmit} className="space-y-2.5 pt-1">
+              {editId && <p className="text-xs text-dojo-blue font-semibold">✏️ 修改記錄</p>}
               <div>
                 <p className="text-xs text-stone-400 mb-1.5">運動類型</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -154,9 +174,9 @@ export default function ExerciseSection({ logId, entries, onRefresh }) {
 
               <div className="flex gap-2">
                 <button type="submit" disabled={saving} className="btn-blue flex-1">
-                  {saving ? '儲存中...' : '新增'}
+                  {saving ? '儲存中...' : editId ? '儲存修改' : '新增'}
                 </button>
-                <button type="button" onClick={() => setShowForm(false)} className="btn-outline">
+                <button type="button" onClick={() => { setShowForm(false); setEditId(null) }} className="btn-outline">
                   取消
                 </button>
               </div>
@@ -164,7 +184,7 @@ export default function ExerciseSection({ logId, entries, onRefresh }) {
           ) : (
             <button
               type="button"
-              onClick={() => setShowForm(true)}
+              onClick={openAdd}
               className="flex items-center gap-1.5 text-dojo-blue text-sm font-semibold w-full justify-center py-2 rounded-xl border border-dashed border-dojo-blue/30 active:scale-95 transition-transform"
             >
               <Plus size={15} /> 新增運動記錄

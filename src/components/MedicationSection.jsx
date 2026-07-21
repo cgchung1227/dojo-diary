@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const ROUTES = [
@@ -24,19 +24,39 @@ const COMMON_MEDS = [
 
 const ROUTE_LABEL = Object.fromEntries(ROUTES.map(r => [r.key, r.label]))
 
+const EMPTY_FORM = { med_name: '', dose: '', route: 'oral', notes: '' }
+
 export default function MedicationSection({ logId, entries, onRefresh }) {
   const [open, setOpen] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ med_name: '', dose: '', route: 'oral', notes: '' })
+  const [editId, setEditId] = useState(null)
+  const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
 
-  async function handleAdd(e) {
+  function openAdd() {
+    setEditId(null)
+    setForm(EMPTY_FORM)
+    setShowForm(true)
+  }
+
+  function openEdit(entry) {
+    setEditId(entry.id)
+    setForm({ med_name: entry.med_name, dose: entry.dose || '', route: entry.route || 'oral', notes: entry.notes || '' })
+    setShowForm(true)
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.med_name.trim() || !logId) return
     setSaving(true)
-    await supabase.from('medication_entries').insert([{ log_id: logId, ...form }])
-    setForm({ med_name: '', dose: '', route: 'oral', notes: '' })
+    if (editId) {
+      await supabase.from('medication_entries').update(form).eq('id', editId)
+    } else {
+      await supabase.from('medication_entries').insert([{ log_id: logId, ...form }])
+    }
+    setForm(EMPTY_FORM)
     setShowForm(false)
+    setEditId(null)
     setSaving(false)
     onRefresh()
   }
@@ -81,14 +101,20 @@ export default function MedicationSection({ logId, entries, onRefresh }) {
                 </div>
                 {e.notes && <p className="text-xs text-stone-400 mt-0.5">{e.notes}</p>}
               </div>
-              <button onClick={() => handleDelete(e.id)} className="text-stone-300 hover:text-red-400 transition-colors flex-shrink-0">
-                <Trash2 size={14} />
-              </button>
+              <div className="flex gap-2 flex-shrink-0">
+                <button onClick={() => openEdit(e)} className="text-stone-300 hover:text-dojo-blue transition-colors">
+                  <Pencil size={14} />
+                </button>
+                <button onClick={() => handleDelete(e.id)} className="text-stone-300 hover:text-red-400 transition-colors">
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
 
           {showForm ? (
-            <form onSubmit={handleAdd} className="space-y-2.5 pt-1">
+            <form onSubmit={handleSubmit} className="space-y-2.5 pt-1">
+              {editId && <p className="text-xs text-dojo-blue font-semibold">✏️ 修改記錄</p>}
               <div>
                 <p className="text-xs text-stone-400 mb-1.5">常用藥物</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -145,9 +171,9 @@ export default function MedicationSection({ logId, entries, onRefresh }) {
 
               <div className="flex gap-2">
                 <button type="submit" disabled={saving} className="btn-blue flex-1">
-                  {saving ? '儲存中...' : '新增'}
+                  {saving ? '儲存中...' : editId ? '儲存修改' : '新增'}
                 </button>
-                <button type="button" onClick={() => setShowForm(false)} className="btn-outline">
+                <button type="button" onClick={() => { setShowForm(false); setEditId(null) }} className="btn-outline">
                   取消
                 </button>
               </div>
@@ -155,7 +181,7 @@ export default function MedicationSection({ logId, entries, onRefresh }) {
           ) : (
             <button
               type="button"
-              onClick={() => setShowForm(true)}
+              onClick={openAdd}
               className="flex items-center gap-1.5 text-dojo-blue text-sm font-semibold w-full justify-center py-2 rounded-xl border border-dashed border-dojo-blue/30 active:scale-95 transition-transform"
             >
               <Plus size={15} /> 新增用藥記錄

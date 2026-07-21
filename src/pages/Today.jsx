@@ -56,11 +56,20 @@ export default function Today() {
 
   async function loadAll() {
     setLoading(true)
-    const { data } = await supabase
+    let { data } = await supabase
       .from('daily_logs')
       .select('*')
       .eq('date', TODAY)
       .maybeSingle()
+
+    if (!data) {
+      const { data: created } = await supabase
+        .from('daily_logs')
+        .insert([{ date: TODAY }])
+        .select()
+        .single()
+      data = created
+    }
 
     if (data) {
       setLogId(data.id)
@@ -330,7 +339,7 @@ export default function Today() {
       </div>
 
       {/* ─── 今日備注 ─── */}
-      <div className="card mb-6">
+      <div className="card mb-4">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">📝</span>
           <span className="font-bold text-stone-800">今日備注</span>
@@ -342,6 +351,25 @@ export default function Today() {
           value={log.notes}
           onChange={e => update('notes', e.target.value)}
         />
+      </div>
+
+      {/* ─── 儲存鍵 ─── */}
+      <div className="mb-8">
+        <button
+          type="button"
+          onClick={() => saveLog(log)}
+          disabled={saving}
+          className="w-full py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60"
+          style={{ backgroundColor: saved ? '#16a34a' : '#1E3A8A', color: '#fff' }}
+        >
+          {saving ? (
+            <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />儲存中...</>
+          ) : saved ? (
+            <><CheckCircle2 size={18} />已儲存！</>
+          ) : (
+            <><Save size={18} />儲存今日記錄</>
+          )}
+        </button>
       </div>
 
     </div>
