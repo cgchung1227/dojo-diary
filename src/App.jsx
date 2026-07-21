@@ -1,11 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Today from './pages/Today'
 import History from './pages/History'
 import BottomNav from './components/BottomNav'
 
 export default function App() {
   return (
-    <BrowserRouter basename="/dojo-diary">
+    <HashRouter>
       <div className="min-h-screen bg-dojo-cream pb-20">
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
@@ -14,6 +14,6 @@ export default function App() {
         </Routes>
       </div>
       <BottomNav />
-    </BrowserRouter>
+    </HashRouter>
   )
 }
