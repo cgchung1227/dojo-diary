@@ -5,7 +5,7 @@ import BottomNav from './components/BottomNav'
 
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <BrowserRouter basename="/dojo-diary">
       <div className="min-h-screen bg-dojo-cream pb-20">
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
