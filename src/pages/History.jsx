@@ -226,7 +226,7 @@ export default function History() {
                     {/* Notes */}
                     {log.notes && (
                       <div>
-                        <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">備注</p>
+                        <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">備註</p>
                         <p className="text-xs text-stone-500">{log.notes}</p>
                       </div>
                     )}

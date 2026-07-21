@@ -266,7 +266,7 @@ export default function Today() {
         </div>
 
         <div>
-          <p className="section-label">皮膚備注</p>
+          <p className="section-label">皮膚備註</p>
           <textarea
             className="inp"
             rows={2}
@@ -338,11 +338,11 @@ export default function Today() {
         </div>
       </div>
 
-      {/* ─── 今日備注 ─── */}
+      {/* ─── 今日備註 ─── */}
       <div className="card mb-4">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">📝</span>
-          <span className="font-bold text-stone-800">今日備注</span>
+          <span className="font-bold text-stone-800">今日備註</span>
         </div>
         <textarea
           className="inp"

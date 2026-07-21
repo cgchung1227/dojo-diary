@@ -148,7 +148,7 @@ export default function DietSection({ logId, entries, onRefresh }) {
                 />
                 <input
                   className="inp"
-                  placeholder="備注"
+                  placeholder="備註"
                   value={form.notes}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 />

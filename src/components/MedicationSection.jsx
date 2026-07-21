@@ -163,7 +163,7 @@ export default function MedicationSection({ logId, entries, onRefresh }) {
 
               <textarea
                 className="inp"
-                placeholder="備注（如：Cytopoint 今日施打，觀察 21 天後搔癢是否回升）"
+                placeholder="備註（如：Cytopoint 今日施打，觀察 21 天後搔癢是否回升）"
                 rows={2}
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
