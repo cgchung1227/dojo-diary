@@ -3,8 +3,7 @@ import { Save, CheckCircle2, Plus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import SkinScore from '../components/SkinScore'
 import ItchScore from '../components/ItchScore'
-import BodyMap from '../components/BodyMap'
-import SkinPhotoUpload from '../components/SkinPhotoUpload'
+import SkinAreaSection from '../components/SkinAreaSection'
 import WeatherSection from '../components/WeatherSection'
 import DietSection from '../components/DietSection'
 import ExerciseSection from '../components/ExerciseSection'
@@ -13,27 +12,11 @@ import GroomingSection from '../components/GroomingSection'
 
 const TODAY = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD
 
-const ODORS = [
-  { key: 'none',   label: '無異味' },
-  { key: 'sour',   label: '酸臭味' },
-  { key: 'fishy',  label: '腥味' },
-  { key: 'yeast',  label: '酵母/麵包味' },
-]
-
-const DISCHARGE = [
-  { key: 'none',   label: '正常乾燥' },
-  { key: 'flaky',  label: '脫皮/皮屑' },
-  { key: 'fluid',  label: '組織液滲出' },
-  { key: 'pus',    label: '膿胞' },
-]
-
 const STRESS_EVENTS = ['獨處時間長', '家中有客人', '去醫院', '洗澡/美容', '環境改變', '吵雜聲']
 
 const EMPTY_LOG = {
   weather: null, humidity: null,
   skin_score: null, itch_score: null,
-  affected_areas: [], skin_photo_url: null, skin_notes: '',
-  odor: null, discharge: null,
   bathed: false, groomed: false, ear_cleaned: false,
   pest_control: false, bedding_washed: false,
   stress_events: [], notes: '',
@@ -45,6 +28,7 @@ export default function Today() {
   const [diet, setDiet] = useState([])
   const [exercise, setExercise] = useState([])
   const [medication, setMedication] = useState([])
+  const [skinAreas, setSkinAreas] = useState([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -79,11 +63,6 @@ export default function Today() {
         humidity: data.humidity,
         skin_score: data.skin_score,
         itch_score: data.itch_score,
-        affected_areas: data.affected_areas || [],
-        skin_photo_url: data.skin_photo_url,
-        skin_notes: data.skin_notes || '',
-        odor: data.odor,
-        discharge: data.discharge,
         bathed: data.bathed || false,
         groomed: data.groomed || false,
         ear_cleaned: data.ear_cleaned || false,
@@ -100,14 +79,16 @@ export default function Today() {
   async function loadEntries(id) {
     const lid = id || logId
     if (!lid) return
-    const [d, e, m] = await Promise.all([
+    const [d, e, m, s] = await Promise.all([
       supabase.from('diet_entries').select('*').eq('log_id', lid).order('created_at'),
       supabase.from('exercise_entries').select('*').eq('log_id', lid).order('created_at'),
       supabase.from('medication_entries').select('*').eq('log_id', lid).order('created_at'),
+      supabase.from('skin_area_entries').select('*').eq('log_id', lid).order('created_at'),
     ])
     setDiet(d.data || [])
     setExercise(e.data || [])
     setMedication(m.data || [])
+    setSkinAreas(s.data || [])
   }
 
   const scheduleSave = useCallback((updatedLog) => {
@@ -202,87 +183,23 @@ export default function Today() {
 
         <div className="mb-4">
           <p className="section-label">整體狀況（1 很差 → 5 很好）</p>
-          <SkinScore
-            score={log.skin_score}
-            onChange={v => update('skin_score', v)}
-          />
-        </div>
-
-        <div className="mb-4">
-          <p className="section-label">搔癢程度 PVAS（0–10）</p>
-          <ItchScore
-            score={log.itch_score}
-            onChange={v => update('itch_score', v)}
-          />
-        </div>
-
-        <div className="mb-4">
-          <p className="section-label">今天抓咬部位</p>
-          <BodyMap
-            selected={log.affected_areas}
-            onChange={v => update('affected_areas', v)}
-          />
-        </div>
-
-        <div className="mb-4">
-          <p className="section-label">異味</p>
-          <div className="flex flex-wrap gap-1.5">
-            {ODORS.map(o => (
-              <button
-                key={o.key}
-                type="button"
-                onClick={() => update('odor', log.odor === o.key ? null : o.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                  log.odor === o.key
-                    ? 'bg-dojo-navy text-white border-dojo-navy'
-                    : 'bg-white text-stone-500 border-stone-200'
-                }`}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <p className="section-label">分泌物狀態</p>
-          <div className="flex flex-wrap gap-1.5">
-            {DISCHARGE.map(d => (
-              <button
-                key={d.key}
-                type="button"
-                onClick={() => update('discharge', log.discharge === d.key ? null : d.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                  log.discharge === d.key
-                    ? 'bg-dojo-navy text-white border-dojo-navy'
-                    : 'bg-white text-stone-500 border-stone-200'
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <p className="section-label">皮膚照片</p>
-          <SkinPhotoUpload
-            date={TODAY}
-            photoUrl={log.skin_photo_url}
-            onUploaded={url => update('skin_photo_url', url)}
-          />
+          <SkinScore score={log.skin_score} onChange={v => update('skin_score', v)} />
         </div>
 
         <div>
-          <p className="section-label">皮膚備註</p>
-          <textarea
-            className="inp"
-            rows={2}
-            placeholder="今天皮膚的觀察細節..."
-            value={log.skin_notes}
-            onChange={e => update('skin_notes', e.target.value)}
-          />
+          <p className="section-label">搔癢程度 PVAS（0–10）</p>
+          <ItchScore score={log.itch_score} onChange={v => update('itch_score', v)} />
         </div>
+      </div>
+
+      {/* ─── 患部狀況 ─── */}
+      <div className="mb-3">
+        <SkinAreaSection
+          logId={logId}
+          date={TODAY}
+          entries={skinAreas}
+          onRefresh={() => loadEntries()}
+        />
       </div>
 
       {/* ─── 天氣 ─── */}
