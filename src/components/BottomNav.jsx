@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { ClipboardList, Clock } from 'lucide-react'
+import { ClipboardList, Clock, TrendingUp, Stethoscope, Scale } from 'lucide-react'
 
 export default function BottomNav() {
   return (
@@ -32,6 +32,51 @@ export default function BottomNav() {
             <>
               <Clock size={22} strokeWidth={isActive ? 2.5 : 1.8} />
               歷史
+            </>
+          )}
+        </NavLink>
+        <NavLink
+          to="/trends"
+          className={({ isActive }) =>
+            `flex-1 flex flex-col items-center gap-1 py-3 text-xs font-semibold transition-colors ${
+              isActive ? 'text-dojo-blue' : 'text-stone-400'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <TrendingUp size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+              趨勢
+            </>
+          )}
+        </NavLink>
+        <NavLink
+          to="/vet"
+          className={({ isActive }) =>
+            `flex-1 flex flex-col items-center gap-1 py-3 text-xs font-semibold transition-colors ${
+              isActive ? 'text-dojo-blue' : 'text-stone-400'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <Stethoscope size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+              回診
+            </>
+          )}
+        </NavLink>
+        <NavLink
+          to="/weight"
+          className={({ isActive }) =>
+            `flex-1 flex flex-col items-center gap-1 py-3 text-xs font-semibold transition-colors ${
+              isActive ? 'text-dojo-blue' : 'text-stone-400'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <Scale size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+              體重
             </>
           )}
         </NavLink>
