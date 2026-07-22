@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
+import { Trash2, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const MEAL_TYPES = [
@@ -18,21 +18,13 @@ const EMPTY_FORM = { meal_type: 'morning', food_name: '', amount: '', notes: '' 
 
 export default function DietSection({ logId, entries, onRefresh }) {
   const [open, setOpen] = useState(true)
-  const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
 
-  function openAdd() {
-    setEditId(null)
-    setForm(EMPTY_FORM)
-    setShowForm(true)
-  }
-
   function openEdit(entry) {
     setEditId(entry.id)
     setForm({ meal_type: entry.meal_type, food_name: entry.food_name, amount: entry.amount || '', notes: entry.notes || '' })
-    setShowForm(true)
   }
 
   async function handleSubmit(e) {
@@ -45,7 +37,6 @@ export default function DietSection({ logId, entries, onRefresh }) {
       await supabase.from('diet_entries').insert([{ log_id: logId, ...form }])
     }
     setForm(EMPTY_FORM)
-    setShowForm(false)
     setEditId(null)
     setSaving(false)
     onRefresh()
@@ -98,8 +89,7 @@ export default function DietSection({ logId, entries, onRefresh }) {
             </div>
           ))}
 
-          {showForm ? (
-            <form onSubmit={handleSubmit} className="space-y-2 pt-1">
+          <form onSubmit={handleSubmit} className="space-y-2 pt-1">
               {editId && <p className="text-xs text-dojo-blue font-semibold">✏️ 修改記錄</p>}
               <div className="flex flex-wrap gap-1.5">
                 {MEAL_TYPES.map(m => (
@@ -142,7 +132,7 @@ export default function DietSection({ logId, entries, onRefresh }) {
               <div className="grid grid-cols-2 gap-2">
                 <input
                   className="inp"
-                  placeholder="份量（如 100g）"
+                  placeholder="份量（如 1片、半碗）"
                   value={form.amount}
                   onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                 />
@@ -158,20 +148,13 @@ export default function DietSection({ logId, entries, onRefresh }) {
                 <button type="submit" disabled={saving} className="btn-blue flex-1">
                   {saving ? '儲存中...' : editId ? '儲存修改' : '新增'}
                 </button>
-                <button type="button" onClick={() => { setShowForm(false); setEditId(null) }} className="btn-outline">
-                  取消
-                </button>
+                {editId && (
+                  <button type="button" onClick={() => { setEditId(null); setForm(EMPTY_FORM) }} className="btn-outline">
+                    取消
+                  </button>
+                )}
               </div>
             </form>
-          ) : (
-            <button
-              type="button"
-              onClick={openAdd}
-              className="flex items-center gap-1.5 text-dojo-blue text-sm font-semibold w-full justify-center py-2 rounded-xl border border-dashed border-dojo-blue/30 active:scale-95 transition-transform"
-            >
-              <Plus size={15} /> 新增飲食記錄
-            </button>
-          )}
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Save, CheckCircle2, Plus, X } from 'lucide-react'
+import { Save, CheckCircle2, ArrowLeft, Plus, X } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import SkinScore from '../components/SkinScore'
 import ItchScore from '../components/ItchScore'
@@ -10,8 +11,6 @@ import DietSection from '../components/DietSection'
 import ExerciseSection from '../components/ExerciseSection'
 import MedicationSection from '../components/MedicationSection'
 import GroomingSection from '../components/GroomingSection'
-
-const TODAY = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD
 
 const ODORS = [
   { key: 'none',   label: '無異味' },
@@ -39,7 +38,9 @@ const EMPTY_LOG = {
   stress_events: [], notes: '',
 }
 
-export default function Today() {
+export default function EditLog() {
+  const { date } = useParams()
+  const navigate = useNavigate()
   const [logId, setLogId] = useState(null)
   const [log, setLog] = useState(EMPTY_LOG)
   const [diet, setDiet] = useState([])
@@ -53,24 +54,15 @@ export default function Today() {
 
   useEffect(() => {
     loadAll()
-  }, [])
+  }, [date])
 
   async function loadAll() {
     setLoading(true)
-    let { data } = await supabase
+    const { data } = await supabase
       .from('daily_logs')
       .select('*')
-      .eq('date', TODAY)
+      .eq('date', date)
       .maybeSingle()
-
-    if (!data) {
-      const { data: created } = await supabase
-        .from('daily_logs')
-        .insert([{ date: TODAY }])
-        .select()
-        .single()
-      data = created
-    }
 
     if (data) {
       setLogId(data.id)
@@ -116,18 +108,12 @@ export default function Today() {
   }, [logId])
 
   async function saveLog(updatedLog) {
+    if (!logId) return
     setSaving(true)
-    const payload = { date: TODAY, ...updatedLog, updated_at: new Date().toISOString() }
-
-    if (logId) {
-      await supabase.from('daily_logs').update(payload).eq('id', logId)
-    } else {
-      const { data } = await supabase.from('daily_logs').insert([payload]).select().single()
-      if (data) {
-        setLogId(data.id)
-        await loadEntries(data.id)
-      }
-    }
+    await supabase
+      .from('daily_logs')
+      .update({ ...updatedLog, updated_at: new Date().toISOString() })
+      .eq('id', logId)
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -137,10 +123,6 @@ export default function Today() {
     const next = { ...log, [field]: value }
     setLog(next)
     scheduleSave(next)
-  }
-
-  function updateGrooming(key, value) {
-    update(key, value)
   }
 
   function toggleStress(event) {
@@ -157,9 +139,11 @@ export default function Today() {
     setCustomStress('')
   }
 
-  const dateStr = new Date().toLocaleDateString('zh-TW', {
-    month: 'long', day: 'numeric', weekday: 'long',
-  })
+  const dateStr = date
+    ? new Date(date + 'T00:00:00').toLocaleDateString('zh-TW', {
+        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
+      })
+    : ''
 
   if (loading) {
     return (
@@ -174,9 +158,16 @@ export default function Today() {
 
       {/* Header */}
       <div className="bg-dojo-navy text-white px-4 pt-12 pb-6 -mx-4 mb-4">
+        <button
+          type="button"
+          onClick={() => navigate('/history')}
+          className="flex items-center gap-1.5 text-white/60 text-xs mb-3 hover:text-white transition-colors"
+        >
+          <ArrowLeft size={14} />返回歷史記錄
+        </button>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-dojo-yellow text-xs font-bold tracking-widest uppercase mb-1">斗宅日記</p>
+            <p className="text-dojo-yellow text-xs font-bold tracking-widest uppercase mb-1">編輯記錄</p>
             <h1 className="text-lg font-bold">{dateStr}</h1>
           </div>
           <div className="w-10 h-10 rounded-full bg-dojo-yellow flex items-center justify-center text-xl">
@@ -197,31 +188,22 @@ export default function Today() {
       <div className="card mb-3">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-lg">🐾</span>
-          <span className="font-bold text-stone-800">今天皮膚狀況</span>
+          <span className="font-bold text-stone-800">皮膚狀況</span>
         </div>
 
         <div className="mb-4">
           <p className="section-label">整體狀況（1 很差 → 5 很好）</p>
-          <SkinScore
-            score={log.skin_score}
-            onChange={v => update('skin_score', v)}
-          />
+          <SkinScore score={log.skin_score} onChange={v => update('skin_score', v)} />
         </div>
 
         <div className="mb-4">
           <p className="section-label">搔癢程度 PVAS（0–10）</p>
-          <ItchScore
-            score={log.itch_score}
-            onChange={v => update('itch_score', v)}
-          />
+          <ItchScore score={log.itch_score} onChange={v => update('itch_score', v)} />
         </div>
 
         <div className="mb-4">
-          <p className="section-label">今天抓咬部位</p>
-          <BodyMap
-            selected={log.affected_areas}
-            onChange={v => update('affected_areas', v)}
-          />
+          <p className="section-label">抓咬部位</p>
+          <BodyMap selected={log.affected_areas} onChange={v => update('affected_areas', v)} />
         </div>
 
         <div className="mb-4">
@@ -267,7 +249,7 @@ export default function Today() {
         <div className="mb-4">
           <p className="section-label">皮膚照片</p>
           <SkinPhotoUpload
-            date={TODAY}
+            date={date}
             photoUrl={log.skin_photo_url}
             onUploaded={url => update('skin_photo_url', url)}
           />
@@ -278,7 +260,7 @@ export default function Today() {
           <textarea
             className="inp"
             rows={2}
-            placeholder="今天皮膚的觀察細節..."
+            placeholder="皮膚的觀察細節..."
             value={log.skin_notes}
             onChange={e => update('skin_notes', e.target.value)}
           />
@@ -289,7 +271,7 @@ export default function Today() {
       <div className="card mb-3">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">🌤️</span>
-          <span className="font-bold text-stone-800">今天天氣</span>
+          <span className="font-bold text-stone-800">天氣</span>
         </div>
         <WeatherSection
           weather={log.weather}
@@ -315,19 +297,15 @@ export default function Today() {
 
       {/* ─── 清潔 ─── */}
       <div className="mb-3">
-        <GroomingSection
-          values={log}
-          onChange={updateGrooming}
-        />
+        <GroomingSection values={log} onChange={(k, v) => update(k, v)} />
       </div>
 
       {/* ─── 壓力事件 ─── */}
       <div className="card mb-3">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">🧠</span>
-          <span className="font-bold text-stone-800">今天壓力事件</span>
+          <span className="font-bold text-stone-800">壓力事件</span>
         </div>
-        <p className="text-xs text-stone-400 mb-2">壓力會降低搔癢閾值，選取有助於交叉比對</p>
         <div className="flex flex-wrap gap-2 mb-3">
           {STRESS_EVENTS.map(e => (
             <button
@@ -373,11 +351,11 @@ export default function Today() {
         </div>
       </div>
 
-      {/* ─── 今日備註 ─── */}
+      {/* ─── 備註 ─── */}
       <div className="card mb-4">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">📝</span>
-          <span className="font-bold text-stone-800">今日備註</span>
+          <span className="font-bold text-stone-800">備註</span>
         </div>
         <textarea
           className="inp"
@@ -402,7 +380,7 @@ export default function Today() {
           ) : saved ? (
             <><CheckCircle2 size={18} />已儲存！</>
           ) : (
-            <><Save size={18} />儲存今日記錄</>
+            <><Save size={18} />儲存記錄</>
           )}
         </button>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
+import { Trash2, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const ROUTES = [
@@ -28,21 +28,13 @@ const EMPTY_FORM = { med_name: '', dose: '', route: 'oral', notes: '' }
 
 export default function MedicationSection({ logId, entries, onRefresh }) {
   const [open, setOpen] = useState(true)
-  const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
 
-  function openAdd() {
-    setEditId(null)
-    setForm(EMPTY_FORM)
-    setShowForm(true)
-  }
-
   function openEdit(entry) {
     setEditId(entry.id)
     setForm({ med_name: entry.med_name, dose: entry.dose || '', route: entry.route || 'oral', notes: entry.notes || '' })
-    setShowForm(true)
   }
 
   async function handleSubmit(e) {
@@ -55,7 +47,6 @@ export default function MedicationSection({ logId, entries, onRefresh }) {
       await supabase.from('medication_entries').insert([{ log_id: logId, ...form }])
     }
     setForm(EMPTY_FORM)
-    setShowForm(false)
     setEditId(null)
     setSaving(false)
     onRefresh()
@@ -112,8 +103,7 @@ export default function MedicationSection({ logId, entries, onRefresh }) {
             </div>
           ))}
 
-          {showForm ? (
-            <form onSubmit={handleSubmit} className="space-y-2.5 pt-1">
+          <form onSubmit={handleSubmit} className="space-y-2.5 pt-1">
               {editId && <p className="text-xs text-dojo-blue font-semibold">✏️ 修改記錄</p>}
               <div>
                 <p className="text-xs text-stone-400 mb-1.5">常用藥物</p>
@@ -173,20 +163,13 @@ export default function MedicationSection({ logId, entries, onRefresh }) {
                 <button type="submit" disabled={saving} className="btn-blue flex-1">
                   {saving ? '儲存中...' : editId ? '儲存修改' : '新增'}
                 </button>
-                <button type="button" onClick={() => { setShowForm(false); setEditId(null) }} className="btn-outline">
-                  取消
-                </button>
+                {editId && (
+                  <button type="button" onClick={() => { setEditId(null); setForm(EMPTY_FORM) }} className="btn-outline">
+                    取消
+                  </button>
+                )}
               </div>
             </form>
-          ) : (
-            <button
-              type="button"
-              onClick={openAdd}
-              className="flex items-center gap-1.5 text-dojo-blue text-sm font-semibold w-full justify-center py-2 rounded-xl border border-dashed border-dojo-blue/30 active:scale-95 transition-transform"
-            >
-              <Plus size={15} /> 新增用藥記錄
-            </button>
-          )}
         </div>
       )}
     </div>

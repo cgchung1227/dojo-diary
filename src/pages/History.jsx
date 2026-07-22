@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { PawPrint } from 'lucide-react'
+import { PawPrint, Pencil } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const WEATHER_ICON = {
@@ -12,6 +13,7 @@ const ODOR_LABEL = { none: '無異味', sour: '酸臭', fishy: '腥味', yeast: 
 const DISC_LABEL = { none: '正常', flaky: '脫皮', fluid: '組織液', pus: '膿胞' }
 
 export default function History() {
+  const navigate = useNavigate()
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
@@ -234,6 +236,14 @@ export default function History() {
                     {!entries && (
                       <p className="text-xs text-stone-300 text-center py-2">載入詳情中...</p>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/edit/${log.date}`)}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-dojo-blue mt-2 px-3 py-1.5 rounded-full border border-dojo-blue/30 hover:bg-dojo-blue-light transition-all"
+                    >
+                      <Pencil size={12} />編輯此筆記錄
+                    </button>
                   </div>
                 )}
               </div>
