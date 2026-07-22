@@ -200,7 +200,7 @@ export default function VetVisits() {
             <p className="section-label">下次回診日期</p>
             <input
               type="date"
-              className="inp"
+              className="inp max-w-full"
               value={form.next_visit}
               onChange={e => setForm(f => ({ ...f, next_visit: e.target.value }))}
             />

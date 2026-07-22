@@ -154,7 +154,7 @@ export default function Weight() {
             <p className="section-label">日期</p>
             <input
               type="date"
-              className="inp"
+              className="inp max-w-full"
               value={form.logged_date}
               onChange={e => setForm(f => ({ ...f, logged_date: e.target.value }))}
               required
