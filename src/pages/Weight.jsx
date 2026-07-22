@@ -149,7 +149,7 @@ export default function Weight() {
       {/* 新增表單 */}
       <form onSubmit={handleSubmit} className="card mb-4 space-y-3">
         <p className="font-bold text-stone-800">記錄體重</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col gap-2">
           <div>
             <p className="section-label">日期</p>
             <input
